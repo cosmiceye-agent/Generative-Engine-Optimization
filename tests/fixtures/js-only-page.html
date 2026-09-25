@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Dashboard</title>
+  <meta name="description" content="Dashboard">
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    // A realistic client-rendered bundle: the entire page is built after load, so
+    // a crawler that does not execute JavaScript sees an empty document.
+    window.__INITIAL_STATE__ = {"user":null,"items":[],"config":{"api":"/api/v2","locale":"en-GB","features":["a","b","c"]}};
+    (function(){
+      var root = document.getElementById("root");
+      var content = document.createElement("main");
+      content.innerHTML = "<h1>Dashboard</h1><p>Everything on this page is injected at runtime, which means a crawler that reads only the server response sees none of it.</p>";
+      root.appendChild(content);
+      for (var i = 0; i < 200; i++) {
+        var filler = document.createElement("div");
+        filler.className = "row-" + i;
+        filler.textContent = "Row " + i + " of generated dashboard content that only exists after hydration completes in the browser.";
+        content.appendChild(filler);
+      }
+    })();
+  </script>
+  <script src="/static/js/main.9f2a1c.js"></script>
+</body>
+</html>
