@@ -73,7 +73,7 @@ export default function OpengraphImage() {
         </div>
 
         <div style={{ display: "flex", color: "#94a3b8", fontSize: "26px" }}>
-          Generative Engine Optimization audit · 21 checks · free
+          Generative Engine Optimization audit · 22 checks · free
         </div>
       </div>
     ),

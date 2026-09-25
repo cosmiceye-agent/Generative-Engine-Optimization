@@ -2,7 +2,7 @@
 
 > GEO Lens audits any public URL for Generative Engine Optimization: whether ChatGPT, Perplexity, Claude, Gemini and Google AI Overviews can crawl it, understand it, and cite it as a source.
 
-GEO Lens is a free, no-signup web tool. Paste a URL and it fetches the page along with its robots.txt, llms.txt and sitemap, then scores it across 21 checks in four categories — crawlability, structure, authority and content — and returns an ordered list of fixes. Nothing is stored; every audit is a live fetch.
+GEO Lens is a free, no-signup web tool. Paste a URL and it fetches the page along with its robots.txt, llms.txt and sitemap, then scores it across 22 checks in four categories — crawlability, structure, authority and content — and returns an ordered list of fixes. Nothing is stored; every audit is a live fetch.
 
 The full Markdown text of every guide on this site is available at /llms-full.txt.
 

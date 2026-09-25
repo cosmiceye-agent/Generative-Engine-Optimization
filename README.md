@@ -69,7 +69,7 @@ flowchart TD
 
 ### The shape that matters
 
-Every check is a **pure function** `(ctx: PageContext) => CheckResult`. No check performs I/O. All fetching happens once, up front, in `analyze.ts`, and the results are frozen into a `PageContext` that the checks read. That is what makes all 21 checks unit-testable against static HTML fixtures with no network and no mocks.
+Every check is a **pure function** `(ctx: PageContext) => CheckResult`. No check performs I/O. All fetching happens once, up front, in `analyze.ts`, and the results are frozen into a `PageContext` that the checks read. That is what makes all 22 checks unit-testable against static HTML fixtures with no network and no mocks.
 
 ```
 src/
@@ -130,7 +130,7 @@ That is how many overall points fixing the check would recover, which puts "heav
 
 Status bands: `pass` ≥ 80, `warn` ≥ 50, `fail` below. Derived centrally in `scoring.ts`, so no check can report a status that disagrees with its own number.
 
-### The 21 checks
+### The 22 checks
 
 | Category | Checks | Weight |
 |---|---|---|
