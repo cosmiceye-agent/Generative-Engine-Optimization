@@ -1,0 +1,160 @@
+---
+title: "How to structure content for AI citations"
+description: "A practical, page-level guide to writing and marking up content so AI answer engines can extract and cite it: headings, paragraph length, self-contained sentences, FAQ blocks and JSON-LD."
+summary: "To be cited by an AI answer engine, structure each page so that any passage lifted out of it still makes sense on its own: lead with the answer, phrase headings as questions, keep paragraphs to one idea, name subjects instead of using pronouns, and mark the page up with JSON-LD."
+datePublished: "2026-03-11"
+dateModified: "2026-09-25"
+author: "The GEO Lens team"
+order: 3
+keywords:
+  - AI citations
+  - content structure for AI
+  - answer engine optimization
+  - FAQPage schema
+faq:
+  - question: "How long should a paragraph be for AI extraction?"
+    answer: "Roughly 40 to 120 words, covering a single idea. Retrieval systems split pages into chunks and embed each one, so a paragraph spanning four ideas produces a vague embedding that matches no question strongly. Two to four focused sentences produce a chunk that matches its question sharply."
+  - question: "Do I need an FAQ section on every page?"
+    answer: "No, but add one wherever readers genuinely have recurring questions. An FAQ is the most retrievable structure available because each entry is already a self-contained question-and-answer pair — exactly the unit an answer engine wants. Three or more real questions is the point at which the section becomes worth retrieving."
+  - question: "Does JSON-LD actually change whether I get cited?"
+    answer: "It changes whether the engine has to infer what your page is or is told outright. An Article node with author, datePublished and dateModified gives an engine everything it needs to attribute the page. Without it, the engine has to guess from the markup, and a guess is easier to get wrong or skip."
+  - question: "What is the single highest-impact change for most pages?"
+    answer: "Rewriting the opening so the first sentence answers the page's core question and names its subject. Extractive systems weight the opening of a document heavily, and most pages waste it on a generic preamble."
+sources:
+  - label: "Schema.org Article vocabulary"
+    url: "https://schema.org/Article"
+  - label: "Schema.org FAQPage"
+    url: "https://schema.org/FAQPage"
+  - label: "MDN: HTML sectioning elements"
+    url: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Heading_Elements"
+  - label: "Flesch reading ease"
+    url: "https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests"
+---
+
+To be cited by an AI answer engine, structure each page so that any passage lifted out of it still makes sense on its own. That single rule explains nearly every recommendation below: retrieval systems extract fragments, not pages, and a fragment that depends on its surroundings becomes useless the moment it is separated from them.
+
+## Why does self-containment matter so much?
+
+An answer engine does not read your page the way a person does. It splits the page into chunks of a few hundred tokens, converts each chunk into a vector, and retrieves the handful whose vectors sit closest to the user's question. The model then writes an answer from those fragments.
+
+Two consequences follow, and everything else is downstream of them:
+
+1. **Your page competes as a set of passages, not as a document.** A brilliant page with one muddy section will lose that section's questions to a mediocre page with a sharp one.
+2. **Context does not travel with the passage.** Whatever a fragment needs in order to make sense has to be inside the fragment.
+
+## How should I open a page?
+
+Answer the question in the first sentence, and name the subject while doing it.
+
+Extractive systems weight the opening of a document heavily, which makes the first 100 words the most valuable real estate you have. Most pages spend it on a preamble.
+
+**Before:**
+
+> In today's fast-paced digital landscape, businesses are constantly searching for ways to stay ahead. In this article, we'll explore everything you need to know about our approach.
+
+**After:**
+
+> A content audit is a systematic review of every page on a site, scoring each one against its purpose so you can decide whether to keep, rewrite, merge or delete it. A typical audit of a 500-page site takes two to three weeks.
+
+The second version is quotable as it stands. The first cannot be quoted at all, because it says nothing.
+
+The test: read your first sentence out of context. If someone who has never seen your page could not tell what it is about, rewrite it.
+
+## How should I phrase headings?
+
+As the questions your readers actually ask.
+
+People type full questions into an assistant — "how do I renew a UK passport" rather than "passport renewal". A heading phrased as that question sits close to the user's query in vector space; a heading reading "Renewals" does not.
+
+- Write "How much does a passport renewal cost?" rather than "Pricing".
+- Write "What documents do I need?" rather than "Requirements".
+- Keep the answer directly beneath the heading, in the first sentence of the first paragraph.
+
+Aim for roughly 40% of your `<h2>` and `<h3>` headings to be question-shaped. Forcing every heading into a question reads badly, and reference sections legitimately need noun headings. Ignoring the pattern altogether wastes the signal.
+
+Structural rules that matter alongside phrasing:
+
+- Exactly one `<h1>`, stating the page's subject.
+- Levels descend one at a time. An `<h2>` followed by an `<h4>` breaks the nesting, and a chunker will attach that section to the wrong parent.
+- No empty headings, and no headings used purely for their font size.
+
+## How long should paragraphs and sentences be?
+
+Paragraphs: 40 to 120 words, one idea each. Sentences: under 40 words.
+
+A 300-word paragraph that covers pricing, availability and support produces one embedding that is a blurry average of three topics. It will lose to a focused competitor on all three questions. Splitting it into three paragraphs produces three sharp embeddings.
+
+Sentence length matters for a different reason: a model quoting you has to take the whole sentence. A 60-word sentence with three subordinate clauses is one a model will paraphrase rather than quote — and a paraphrase is much less likely to carry a citation.
+
+Aim for a Flesch Reading Ease score of 50 to 80. Note that higher is not automatically better: a technical page scoring above 90 has usually had its substance removed, and there is nothing left worth citing.
+
+## How do I make individual sentences quotable?
+
+Name the subject instead of pointing at it.
+
+This is the most mechanical improvement available, and the most commonly missed. Scan your key sentences for ones beginning with "It", "This", "That", "They" or "These". Each of those is a sentence that becomes meaningless when extracted.
+
+**Before:** "It typically takes three weeks and costs around £88."
+
+**After:** "A standard adult passport renewal typically takes three weeks and costs £88."
+
+Then add specifics. Concrete figures are what a model can attribute; vague claims are what it must hedge:
+
+- "significantly faster" → "34% faster"
+- "many organisations" → "61% of the 1,200 organisations surveyed"
+- "recently" → "in March 2026"
+
+Attribute each figure inline — "according to the 2026 Stack Overflow survey" — because an unsourced number is a liability rather than an asset.
+
+## Which structures extract best?
+
+In rough order of usefulness:
+
+1. **FAQ sections.** Each entry is already a self-contained question-and-answer pair, which is exactly the unit retrieval wants. Use `<h3>` questions with a 40–60 word answer beneath, or `<details>`/`<summary>` — the latter stays readable in raw HTML, unlike a JavaScript accordion.
+2. **Definition lists and tables.** The markup states the relationship between items, so a model lifts the whole structure intact rather than re-deriving it. Give tables a `<caption>` and `<th>` headers.
+3. **Ordered and unordered lists.** Any enumeration buried in prose is a list waiting to be extracted.
+4. **Short, focused paragraphs.** The default, done well.
+
+## What markup should I add?
+
+JSON-LD, in a `<script type="application/ld+json">` block. It tells an engine what the page is instead of making it infer.
+
+For a guide like this one, an `Article` node needs at minimum:
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "How to structure content for AI citations",
+  "author": { "@type": "Person", "name": "Jane Doe", "url": "https://example.com/team/jane" },
+  "datePublished": "2026-03-11",
+  "dateModified": "2026-09-25",
+  "publisher": { "@type": "Organization", "name": "Example" }
+}
+```
+
+`author` and `datePublished` are what make the page attributable; `dateModified` is what tells an engine the page is still maintained. A page without them is not unciteable, but it loses to a dated competitor on anything time-sensitive.
+
+Add `FAQPage` alongside it when the page has a real FAQ section, and `BreadcrumbList` to place the page in your site's hierarchy.
+
+## A checklist
+
+Run this against any page you want cited:
+
+- [ ] The first sentence answers the page's question and names its subject.
+- [ ] Exactly one `<h1>`; heading levels descend one at a time.
+- [ ] At least 40% of subheadings are phrased as questions.
+- [ ] No paragraph runs past 120 words; no sentence past 40.
+- [ ] Key sentences begin with a noun, not a pronoun.
+- [ ] Every claim that could take a figure has one, with a source named inline.
+- [ ] Enumerations are lists; comparisons are tables with `<th>` and a `<caption>`.
+- [ ] An FAQ section of at least three real questions, with `FAQPage` JSON-LD.
+- [ ] `Article` JSON-LD with `author`, `datePublished` and `dateModified`.
+- [ ] A self-referencing absolute canonical URL.
+- [ ] The content is in the raw HTML — verified with `curl`, not assumed.
+
+## Where to go next
+
+- [What is GEO?](/learn/what-is-geo) for the concepts behind the checklist.
+- [GEO vs SEO](/learn/geo-vs-seo) for what carries over from existing SEO work.
+- [Run an audit](/analyze) to have all of the above checked automatically.

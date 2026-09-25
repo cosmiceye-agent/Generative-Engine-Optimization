@@ -1,0 +1,81 @@
+---
+title: "What is GEO (Generative Engine Optimization)?"
+description: "Generative Engine Optimization is the practice of structuring web content so AI answer engines can extract and cite it. Learn what GEO is, how it differs from SEO, and where to start."
+summary: "Generative Engine Optimization (GEO) is the practice of structuring web content so that AI answer engines such as ChatGPT, Perplexity, Claude and Google AI Overviews can crawl it, understand it, and cite it as a source."
+datePublished: "2026-01-15"
+dateModified: "2026-09-25"
+author: "The GEO Lens team"
+order: 1
+keywords:
+  - generative engine optimization
+  - what is GEO
+  - AI search optimization
+  - AI citations
+faq:
+  - question: "Is GEO just SEO with a new name?"
+    answer: "No. They share a foundation — a page still has to be crawlable and well-structured — but they optimise for different outcomes. SEO competes for a position in a list of links. GEO competes to be the passage an assistant quotes inside a single synthesised answer, where there is no list and often no click."
+  - question: "Do I need to block AI crawlers to protect my content?"
+    answer: "That is an editorial decision, and the two kinds of bot are worth separating. Training crawlers (GPTBot, CCBot, Google-Extended) build model corpora. Retrieval bots (OAI-SearchBot, PerplexityBot, ChatGPT-User, Claude-User) fetch pages to answer a question right now, with attribution. Blocking retrieval bots removes you from cited answers; blocking training bots does not."
+  - question: "How long does it take to see results from GEO changes?"
+    answer: "Crawlability fixes — unblocking a bot in robots.txt, server-rendering content — take effect as soon as the page is re-crawled, often within days. Content and structure changes depend on the engine re-reading and re-embedding the page, which typically takes longer."
+  - question: "Does GEO work if my site is built with React or Vue?"
+    answer: "Only if you server-render or statically generate the content. Most AI crawlers do not execute JavaScript, so a client-rendered page looks empty to them. Next.js, Nuxt, Remix and similar frameworks solve this; a plain client-side SPA does not."
+sources:
+  - label: "RFC 9309 — Robots Exclusion Protocol"
+    url: "https://www.rfc-editor.org/rfc/rfc9309.html"
+  - label: "The /llms.txt proposal"
+    url: "https://llmstxt.org/"
+  - label: "Schema.org Article vocabulary"
+    url: "https://schema.org/Article"
+  - label: "Google: AI features and your website"
+    url: "https://developers.google.com/search/docs/appearance/ai-features"
+---
+
+Generative Engine Optimization (GEO) is the practice of structuring web content so that AI answer engines — ChatGPT, Perplexity, Claude, Gemini and Google AI Overviews — can crawl it, understand it, and cite it as a source. Where search engine optimisation competes for a position in a ranked list of links, GEO competes to be the passage a model quotes inside a single generated answer.
+
+## Why does GEO exist as a separate discipline?
+
+The shape of the result page changed, and with it the shape of the prize.
+
+A classic search result gives a user ten links and lets them choose. An answer engine gives them one synthesised paragraph with a handful of citations attached. There is no second page of results to rank on, and frequently no click at all — the user reads the answer and leaves. Being the source named in that paragraph is a different objective from ranking third for a keyword, and it responds to different work.
+
+Three technical realities drive most of that difference:
+
+- **Most AI crawlers do not run JavaScript.** Googlebot has rendered JavaScript for years. The retrieval bots that fetch pages for answer engines largely do not — they read the raw HTML response and move on. A client-rendered application that ships an empty `<div id="root">` is, to them, a blank page.
+- **Retrieval works on passages, not pages.** A page is split into chunks, each chunk is embedded as a vector, and the chunks nearest the user's question are what the model actually reads. Your page does not compete as a unit; its individual sections do.
+- **Attribution needs something to attribute.** A model deciding whether to name you as a source weighs whether there is an identifiable author, a date, a publisher and a canonical address. Unattributed text gets absorbed; attributed text gets cited.
+
+## What does an answer engine actually look for?
+
+Four things, in roughly this order of consequence.
+
+**Can it fetch the page?** This is binary and it gates everything else. Your `robots.txt` either permits the retrieval bots or it does not. A `noindex` meta tag, a `nosnippet` directive, a 404, or content that only exists after a JavaScript bundle runs will each remove you from consideration entirely, no matter how good the writing is.
+
+**Can it find the answer inside the page?** A single `<h1>` stating the subject, `<h2>` sections that descend one level at a time, headings phrased as the questions readers actually ask, and paragraphs short enough that each covers one idea. Lists and tables matter here more than they do in SEO, because a model lifts them out intact — the markup already states the relationship between the items, so nothing has to be re-derived.
+
+**Is there a reason to trust it?** JSON-LD structured data telling the engine what type of thing this page is, a named author, a `dateModified` that shows the page is maintained, outbound links to primary sources, and a canonical URL so citation credit lands in one place.
+
+**Is the prose itself quotable?** This is the part most teams miss. A sentence beginning "It does this by…" is useless once extracted — the referent is gone. A sentence beginning "Generative Engine Optimization is…" survives extraction intact. Concrete figures beat vague claims, because a specific number is something a model can attribute where a hedge is something it must soften.
+
+## How do I start optimising for AI answer engines?
+
+Work in the order above, because the categories gate each other. There is no point rewriting your opening paragraph if `robots.txt` blocks PerplexityBot.
+
+1. **Check your `robots.txt` against the retrieval bots.** Confirm `OAI-SearchBot`, `ChatGPT-User`, `PerplexityBot` and `Claude-User` can reach your content pages. Decide separately whether you want to allow the training crawlers.
+2. **Confirm the content exists without JavaScript.** Fetch your page with `curl` and read what comes back. If the body is empty, nothing else you do will matter.
+3. **Lead with the answer.** Make the first 100 words state what the page is about in a definition-shaped sentence that names its subject. Cut the "In today's fast-paced world" opening.
+4. **Add structured data.** At minimum an `Organization` node for the site and the type matching each page — `Article` for a guide, `FAQPage` for a Q&A section, `HowTo` for instructions.
+5. **Cite your own sources.** Pages that link to primary sources get cited more readily than pages that assert.
+6. **Publish an `llms.txt`.** A Markdown index at your site root pointing models at the clean version of your key pages. Support is still emerging, but the cost is one file.
+
+## What GEO is not
+
+GEO is not a way to trick a model into citing you. The techniques that work are, almost without exception, the techniques that make a page genuinely easier for a person to read and verify: state your claims plainly, back them with figures, say who wrote it and when, and structure the page so the answer is findable. Keyword stuffing, hidden text and prompt-injection attempts in page copy are, at best, ignored.
+
+It is also not a replacement for SEO. The two share a foundation — crawlability, structure, canonical URLs — and diverge at the top of the stack. A page that is invisible to Googlebot is usually invisible to the answer engines too.
+
+## Where to go next
+
+- [GEO vs SEO](/learn/geo-vs-seo) covers what carries over from your existing SEO work and what does not.
+- [How to structure content for AI citations](/learn/structure-content-for-ai-citations) is the practical, page-level version of this guide.
+- Or [run an audit](/analyze) and get the list for a page you actually own.

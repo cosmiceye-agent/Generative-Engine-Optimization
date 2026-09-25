@@ -1,0 +1,103 @@
+---
+title: "GEO vs SEO: what carries over and what does not"
+description: "GEO and SEO share a technical foundation but optimise for different outcomes. A side-by-side comparison of crawling, ranking signals, structure and measurement, with what to change."
+summary: "GEO and SEO share crawlability and structure as a foundation, but SEO optimises for a position in a ranked list of links while GEO optimises to be the passage quoted inside a single generated answer."
+datePublished: "2026-02-03"
+dateModified: "2026-09-25"
+author: "The GEO Lens team"
+order: 2
+keywords:
+  - GEO vs SEO
+  - AI search vs traditional search
+  - answer engine optimization
+faq:
+  - question: "Should I stop doing SEO and do GEO instead?"
+    answer: "No. Around 70% of the technical foundation is shared — crawlability, server-rendered HTML, heading structure, canonical URLs and structured data serve both. Treat GEO as an additional layer on top of a healthy SEO baseline, not a replacement for it."
+  - question: "Do backlinks matter for GEO?"
+    answer: "Less directly than for ranking, but they are not irrelevant. Answer engines lean on established notions of site authority when deciding which of several sources to name, and many of those notions are built from link graphs. The difference is that a single well-structured page on a modest domain can win a citation for a specific question in a way it could rarely win a top-three ranking."
+  - question: "How do I measure GEO when there is no rank to track?"
+    answer: "Measure citations rather than positions. Query the answer engines for the questions your page targets and record whether you are named. Watch referral traffic from chat.openai.com, perplexity.ai and similar hosts in your analytics. Track the AI crawler user agents in your server logs to confirm you are being fetched at all."
+  - question: "Does keyword research still apply?"
+    answer: "The intent research does; the keyword density does not. People type full questions into an assistant rather than two-word queries, so phrase headings as those questions. What no longer helps is repeating a target phrase for density — retrieval matches on meaning, not on term frequency."
+sources:
+  - label: "RFC 9309 — Robots Exclusion Protocol"
+    url: "https://www.rfc-editor.org/rfc/rfc9309.html"
+  - label: "Google Search Central: crawling and indexing"
+    url: "https://developers.google.com/search/docs/crawling-indexing"
+  - label: "Schema.org FAQPage"
+    url: "https://schema.org/FAQPage"
+---
+
+GEO and SEO share a technical foundation but optimise for different outcomes. SEO earns a position in a ranked list of ten links that a user chooses from; GEO earns a sentence inside a single synthesised answer where there is no list and often no click. Most of your crawlability and structure work carries over unchanged. What changes is what you do at the top of the stack.
+
+## What is the same?
+
+More than the framing of "GEO vs SEO" suggests. Both disciplines need:
+
+- A page that returns HTTP 200 over HTTPS with a sane content type.
+- Content present in the server HTML.
+- One `<h1>` and a heading hierarchy that descends one level at a time.
+- A self-referencing canonical URL.
+- An XML sitemap, declared in `robots.txt`.
+- Structured data describing what the page is.
+- Fast loading and a page that works on a phone.
+
+If your SEO fundamentals are in order, you have already done a large share of the GEO work. The audit categories in GEO Lens reflect this: *crawlability* and *structure* are largely shared ground, while *authority* and *content* are where the disciplines diverge.
+
+## Where do they diverge?
+
+| Dimension | Classic SEO | GEO |
+| --- | --- | --- |
+| The prize | A position in a list of links | Being the cited source inside one answer |
+| JavaScript | Googlebot renders it before indexing | Most AI crawlers read raw HTML only |
+| Unit of competition | The page | The passage, chunked and embedded |
+| Query shape | Short keyword phrases | Full natural-language questions |
+| Ranking signals | Links, relevance, page experience | Extractability, specificity, attribution |
+| Duplicate handling | Canonical consolidates ranking | Canonical decides who gets named |
+| Success metric | Clicks and position | Citation frequency and share of voice |
+| Failure mode | Ranking on page three | Being absorbed without attribution |
+
+### JavaScript is the sharpest difference
+
+Googlebot has rendered JavaScript for years, which let a generation of client-rendered applications rank acceptably. The retrieval bots behind answer engines largely do not render. This means a single architectural decision — client-side rendering versus server-side rendering — can leave a site visible in Google and simultaneously invisible in ChatGPT and Perplexity.
+
+The fix is the ordinary one: server-render or statically generate the main content. Next.js, Nuxt, Astro, Remix and plain server-rendered templates all satisfy it.
+
+### Retrieval competes on passages, not pages
+
+An answer engine splits your page into chunks, embeds each one, and retrieves the chunks nearest the user's question. This changes what "optimising a page" means in a concrete way:
+
+- A 300-word paragraph covering four ideas produces one muddy embedding that matches nothing strongly. Two to four focused sentences produce a chunk that matches its question sharply.
+- A heading reading "Renewals" carries almost no signal. "How do I renew a passport?" sits close to the user's actual question in vector space.
+- A sentence starting "It costs £88" loses its meaning once extracted. "A standard adult passport renewal costs £88" survives.
+
+### Attribution replaces ranking as the scarce resource
+
+In SEO, ten sources can appear on one result page. In an answer, typically three to five are cited, and often only one is named in the sentence that matters. The signals that decide *which* source gets named — a real author, a `dateModified`, a publisher, links to primary sources, a canonical URL — are therefore worth considerably more attention than they get in a typical SEO checklist.
+
+## What should I actually change?
+
+If you have a healthy SEO baseline, the GEO-specific work is roughly this:
+
+1. **Audit `robots.txt` for the AI bots specifically.** A `User-agent: *` group that was fine for Googlebot may be blocking `OAI-SearchBot` by accident. Name the retrieval bots in their own groups so a later wildcard change cannot catch them.
+2. **Verify raw-HTML rendering.** `curl` your own page and read the output.
+3. **Rewrite openings to answer first.** Delete the throat-clearing introduction. The first sentence should define the subject.
+4. **Rephrase headings as questions.** Aim for roughly 40% of your `<h2>`/`<h3>` headings to be the questions readers ask. Forcing every heading into a question reads badly; ignoring the pattern entirely wastes the signal.
+5. **De-pronoun your key sentences.** Search for sentences beginning "It", "This" or "They" and name the subject instead.
+6. **Add figures and cite them.** Replace "significantly faster" with a number and a source.
+7. **Add an FAQ block with `FAQPage` JSON-LD.** Question-and-answer pairs are the single most retrievable structure on the web, because each one is already a self-contained unit.
+8. **Publish `llms.txt` and, optionally, `llms-full.txt`.**
+
+## How do I measure it?
+
+There is no Search Console for answer engines yet, so measurement is more manual:
+
+- **Server logs.** Confirm `OAI-SearchBot`, `PerplexityBot`, `ClaudeBot` and friends are actually fetching your pages. If they are not, nothing downstream matters.
+- **Citation tracking.** Ask the engines the questions your pages target and record whether you are named. Do it on a fixed schedule so the results are comparable.
+- **Referral traffic.** Assistant referrals show up in analytics from hosts such as `chat.openai.com` and `perplexity.ai`. The volume is usually small relative to search; the intent is usually high.
+
+## Where to go next
+
+- [What is GEO?](/learn/what-is-geo) for the conceptual grounding.
+- [How to structure content for AI citations](/learn/structure-content-for-ai-citations) for the page-level mechanics.
+- [Run an audit](/analyze) to see where a specific page stands.
