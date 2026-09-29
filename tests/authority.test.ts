@@ -110,6 +110,27 @@ describe("author-info check", () => {
   it("scores zero with no attribution", async () => {
     expect(authorInfo(await fixtureContext("bad-page")).score).toBe(0);
   });
+
+  it("finds a visible byline past an empty <link rel=author> in the head", () => {
+    // Next.js emits <link rel="author"> from page metadata. It matches the byline
+    // selector and is always empty, so taking the first match blindly reported
+    // "no byline" on pages that plainly had one.
+    const ctx = contextFromHtml(
+      `<html><head><link rel="author" href="https://example.com/about"></head>` +
+        `<body><main><h1>T</h1><p class="byline">By Ada Lovelace</p></main></body></html>`,
+    );
+    const result = authorInfo(ctx);
+    expect(result.findings.some((f) => f.includes("Ada Lovelace"))).toBe(true);
+    expect(result.findings).not.toContain("No visible byline element found.");
+  });
+
+  it("still reports no byline when the only match is the empty head link", () => {
+    const ctx = contextFromHtml(
+      `<html><head><link rel="author" href="https://example.com/about"></head>` +
+        `<body><main><h1>T</h1><p>Body copy with no byline.</p></main></body></html>`,
+    );
+    expect(authorInfo(ctx).findings).toContain("No visible byline element found.");
+  });
 });
 
 describe("dates check", () => {

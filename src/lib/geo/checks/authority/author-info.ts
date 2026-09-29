@@ -52,8 +52,17 @@ const checkAuthorInfo: CheckFn = (ctx) => {
     findings.push(`<meta name="author" content="${metaAuthor}">.`);
   }
 
-  const bylineText = $(BYLINE_SELECTOR).first().text().replace(/\s+/g, " ").trim();
-  if (bylineText.length > 0 && bylineText.length < 200) {
+  // Take the first match that actually carries text, not simply the first match.
+  // `<link rel="author">` in <head> satisfies the selector and is always empty, so
+  // `.first()` would report "no byline" on any page that declares author metadata —
+  // a false negative on exactly the pages most likely to have a real byline.
+  const bylineText =
+    $(BYLINE_SELECTOR)
+      .toArray()
+      .map((node) => $(node).text().replace(/\s+/g, " ").trim())
+      .find((text) => text.length > 0 && text.length < 200) ?? "";
+
+  if (bylineText.length > 0) {
     score += 15;
     findings.push(`Visible byline on the page: "${bylineText.slice(0, 80)}".`);
   } else {
