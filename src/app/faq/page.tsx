@@ -4,9 +4,10 @@ import type { FAQPage, WithContext } from "schema-dts";
 import { JsonLd } from "@/components/JsonLd";
 import { site } from "@/lib/site";
 import { FAQ } from "@/lib/faq";
+import { PageHeader } from "@/components/PageHeader";
 
 const description =
-  "Answers to common questions about Generative Engine Optimization and GEO Lens: how the score is calculated, why checks are weighted, whether to block AI crawlers, and what llms.txt is for.";
+  "Answers to common questions about Generative Engine Optimization and Envoyix: how the score is calculated, why checks are weighted, whether to block AI crawlers, and what llms.txt is for.";
 
 export const metadata: Metadata = {
   title: "GEO FAQ",
@@ -37,16 +38,13 @@ const faqPage: WithContext<FAQPage> = {
 
 export default function FaqPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-14">
+    <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
       <JsonLd data={faqPage} />
 
-      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-        Frequently asked questions
-      </h1>
-      <p className="mt-4 text-lg leading-relaxed text-muted">
-        Common questions about Generative Engine Optimization and how GEO Lens scores a page. Each
+      <PageHeader eyebrow="Reference" title="Frequently asked questions">
+        Common questions about Generative Engine Optimization and how Envoyix scores a page. Each
         answer is self-contained, so it makes sense quoted on its own.
-      </p>
+      </PageHeader>
 
       {/*
         <details>/<summary> rather than a JS accordion: the answers stay in the
@@ -58,12 +56,24 @@ export default function FaqPage() {
         {FAQ.map((entry) => (
           <details
             key={entry.question}
-            className="rounded-lg border border-border-subtle bg-surface-raised p-5 open:bg-surface"
+            className="group rounded-xl border border-border-subtle bg-surface-raised p-5 transition-colors hover:border-border-strong open:border-border-strong open:bg-surface"
           >
-            <summary className="cursor-pointer list-none font-medium">
-              <h2 className="inline text-base font-medium">{entry.question}</h2>
+            <summary className="flex cursor-pointer list-none items-start gap-3">
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 12 12"
+                className="mt-1.5 size-3 shrink-0 text-muted transition-transform group-open:rotate-90"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 2l4 4-4 4" />
+              </svg>
+              <h2 className="font-display text-base font-semibold">{entry.question}</h2>
             </summary>
-            <p className="mt-3 leading-relaxed text-muted">{entry.answer}</p>
+            <p className="mt-3 pl-6 leading-relaxed text-muted">{entry.answer}</p>
           </details>
         ))}
       </div>

@@ -22,9 +22,9 @@ export const FAQ: FaqEntry[] = [
       "Because the checks are not equally consequential. A robots.txt rule blocking OAI-SearchBot makes every other check irrelevant, so it carries a weight of 10. A missing og:image costs a little polish, so it carries a weight of 3. Weights are declared by each check module, which means adding a new check cannot silently rescale the existing ones.",
   },
   {
-    question: "Does GEO Lens execute JavaScript when it analyses a page?",
+    question: "Does Envoyix execute JavaScript when it analyses a page?",
     answer:
-      "No, and that is deliberate. Most AI crawlers read the raw HTML response without running JavaScript, so rendering the page first would give you a flattering score that does not reflect what those crawlers actually see. If your content only appears after a JavaScript bundle runs, GEO Lens reports it as missing — because to an answer engine, it is.",
+      "No, and that is deliberate. Most AI crawlers read the raw HTML response without running JavaScript, so rendering the page first would give you a flattering score that does not reflect what those crawlers actually see. If your content only appears after a JavaScript bundle runs, Envoyix reports it as missing — because to an answer engine, it is.",
   },
   {
     question: "Will a high GEO score guarantee that AI engines cite my page?",
@@ -39,12 +39,12 @@ export const FAQ: FaqEntry[] = [
   {
     question: "What is llms.txt and do I need one?",
     answer:
-      "llms.txt is an emerging convention — a Markdown file at your site root that points language models at the canonical, clean versions of your key pages. It is not yet universally supported, so GEO Lens treats it as a modest bonus rather than a requirement. The cost is one file, and the downside is nil.",
+      "llms.txt is an emerging convention — a Markdown file at your site root that points language models at the canonical, clean versions of your key pages. It is not yet universally supported, so Envoyix treats it as a modest bonus rather than a requirement. The cost is one file, and the downside is nil.",
   },
   {
-    question: "Does GEO Lens store the URLs I submit?",
+    question: "Does Envoyix store the URLs I submit?",
     answer:
-      "No. Each audit is a live fetch, the report is rendered into the response, and nothing is written to disk or a database. There is no account system and no analytics on submitted URLs.",
+      "Not durably. Nothing is written to disk or to a database, and there is no account system or analytics on submitted URLs. A finished report is kept in the server's memory for 60 seconds so that a refresh, or a second person auditing the same page, is answered instantly rather than re-fetching the site; after a minute it is gone.",
   },
   {
     question: "Why did my page fail to fetch?",

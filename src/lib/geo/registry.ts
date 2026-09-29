@@ -89,7 +89,7 @@ export function runChecks(ctx: PageContext): CheckResult[] {
         findings: [
           `A check threw an error on this page: ${error instanceof Error ? error.message : String(error)}`,
         ],
-        fix: "This is a bug in GEO Lens rather than a problem with the page. Please report the URL.",
+        fix: "This is a bug in Envoyix rather than a problem with the page. Please report the URL.",
       });
     }
   }

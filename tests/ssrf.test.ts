@@ -143,7 +143,7 @@ describe("assertSafeUrl", () => {
 
   it("rejects a hostname that does not resolve", async () => {
     await expect(
-      assertSafeUrl("https://this-domain-should-never-exist-geolens.invalid/"),
+      assertSafeUrl("https://this-domain-should-never-exist-envoyix.invalid/"),
     ).rejects.toThrow(SsrfError);
   });
 });

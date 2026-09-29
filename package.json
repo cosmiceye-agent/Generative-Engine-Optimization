@@ -1,5 +1,5 @@
 {
-  "name": "geo-lens",
+  "name": "envoyix",
   "version": "0.1.0",
   "private": true,
   "description": "Audit any public URL for Generative Engine Optimization (GEO) — how likely AI answer engines are to crawl, understand and cite it.",

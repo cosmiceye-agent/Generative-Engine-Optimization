@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import type { Organization, WebSite, WithContext } from "schema-dts";
 import "./globals.css";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -14,6 +14,15 @@ const sans = Inter({
   variable: "--font-sans-stack",
   subsets: ["latin"],
   display: "swap",
+});
+
+// Headings only. A second face is the cheapest way to give the product a voice,
+// and scoping it to headings keeps the extra payload to a few hundred glyphs.
+const display = Space_Grotesk({
+  variable: "--font-display-stack",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["500", "600", "700"],
 });
 
 const mono = JetBrains_Mono({
@@ -94,7 +103,10 @@ const website: WithContext<WebSite> = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      className={`${sans.variable} ${display.variable} ${mono.variable} h-full antialiased`}
+    >
       <head>
         <ThemeScript />
       </head>

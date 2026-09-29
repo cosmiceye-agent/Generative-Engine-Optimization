@@ -6,7 +6,7 @@
  * the page still renders correctly (following the OS preference) if the script
  * is blocked or localStorage throws in a locked-down browser.
  */
-const SCRIPT = `(function(){try{var t=localStorage.getItem("geo-lens-theme");if(t==="dark"||t==="light"){document.documentElement.classList.add(t)}}catch(e){}})();`;
+const SCRIPT = `(function(){try{var t=localStorage.getItem("envoyix-theme");if(t==="dark"||t==="light"){document.documentElement.classList.add(t)}}catch(e){}})();`;
 
 export function ThemeScript() {
   return <script dangerouslySetInnerHTML={{ __html: SCRIPT }} />;

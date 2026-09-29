@@ -4,6 +4,8 @@ import type { CollectionPage, WithContext } from "schema-dts";
 import { getAllGuides } from "@/lib/guides";
 import { JsonLd } from "@/components/JsonLd";
 import { site } from "@/lib/site";
+import { formatDate } from "@/lib/format-date";
+import { PageHeader } from "@/components/PageHeader";
 
 export const metadata: Metadata = {
   title: "Learn GEO",
@@ -41,37 +43,32 @@ export default async function LearnIndexPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-14">
+    <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
       <JsonLd data={collection} />
 
-      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Learn GEO</h1>
-      <p className="mt-4 text-lg leading-relaxed text-muted">
+      <PageHeader eyebrow="Guides" title="Learn GEO">
         Generative Engine Optimization is the practice of structuring web content so AI answer
         engines can crawl, understand and cite it. These guides cover what that means, how it
         differs from SEO, and exactly what to change on a page.
-      </p>
+      </PageHeader>
 
       <ul className="mt-10 space-y-4">
         {guides.map((guide) => (
           <li key={guide.slug}>
-            <article className="rounded-lg border border-border-subtle bg-surface-raised p-6 transition-colors hover:border-accent">
-              <h2 className="text-xl font-semibold tracking-tight">
+            <article className="rounded-xl border border-border-subtle bg-surface-raised p-6 transition-colors hover:border-accent">
+              <h2 className="font-display text-xl font-semibold">
                 <Link href={`/learn/${guide.slug}`} className="hover:text-accent">
                   {guide.title}
                 </Link>
               </h2>
               <p className="mt-2 leading-relaxed text-muted">{guide.summary}</p>
-              <p className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
+              <p className="mt-4 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[0.6875rem] uppercase tracking-wider text-muted">
                 <span>{guide.readingMinutes} min read</span>
                 <span aria-hidden="true">·</span>
                 <span>
                   Updated{" "}
                   <time dateTime={guide.dateModified}>
-                    {new Date(guide.dateModified).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
+                    {formatDate(guide.dateModified)}
                   </time>
                 </span>
               </p>

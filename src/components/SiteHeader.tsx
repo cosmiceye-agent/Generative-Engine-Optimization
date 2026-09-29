@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
+import { Logo } from "./Logo";
 
 const NAV = [
   { href: "/analyze", label: "Analyze" },
@@ -10,7 +11,7 @@ const NAV = [
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-border-subtle bg-background/85 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border-subtle bg-background/80 backdrop-blur-md">
       {/* First tab stop on every page, per WCAG 2.4.1. */}
       <a
         href="#main"
@@ -18,24 +19,23 @@ export function SiteHeader() {
       >
         Skip to content
       </a>
-      <div className="mx-auto flex h-14 max-w-5xl items-center gap-4 px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-          <span
-            aria-hidden="true"
-            className="grid size-6 place-items-center rounded-md bg-accent text-[11px] font-bold text-accent-contrast"
-          >
-            GL
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
+        <Link href="/" className="group flex items-center gap-2.5">
+          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent text-accent-contrast">
+            <Logo className="size-5" />
           </span>
-          GEO Lens
+          <span className="font-display text-[1.0625rem] font-semibold tracking-tight">
+            Envoyix
+          </span>
         </Link>
 
         <nav aria-label="Main" className="ml-auto">
-          <ul className="flex items-center gap-1 text-sm">
+          <ul className="flex items-center gap-0.5 text-sm">
             {NAV.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="rounded-md px-2.5 py-1.5 text-muted transition-colors hover:bg-surface hover:text-foreground sm:px-3"
+                  className="block rounded-md px-2.5 py-1.5 font-medium text-muted transition-colors hover:bg-surface hover:text-foreground sm:px-3"
                 >
                   {item.label}
                 </Link>

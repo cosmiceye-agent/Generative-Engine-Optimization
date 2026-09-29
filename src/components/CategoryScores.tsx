@@ -9,37 +9,46 @@ function toneFor(score: number): string {
 
 export function CategoryScores({ categories }: { categories: CategoryScore[] }) {
   return (
-    <dl className="grid gap-4 sm:grid-cols-2">
-      {categories.map((category) => (
-        <div
-          key={category.category}
-          className="rounded-lg border border-border-subtle bg-surface-raised p-4"
-        >
-          <div className="flex items-baseline justify-between gap-3">
-            <dt className="font-medium">{CATEGORY_LABELS[category.category]}</dt>
-            <dd
-              className="text-lg font-semibold tabular-nums"
-              style={{ color: toneFor(category.score) }}
-            >
-              {category.score}
-            </dd>
-          </div>
-          <p className="mt-1 text-xs text-muted">{CATEGORY_BLURBS[category.category]}</p>
+    // Cell borders are uniform rather than conditional: on the outer edges they
+    // land exactly on the container's own border, so they cost nothing visually
+    // and the markup needs no first/last-child variants.
+    <dl className="grid grid-cols-2 overflow-hidden rounded-xl border border-border-subtle bg-surface-raised sm:grid-cols-4">
+      {categories.map((category) => {
+        const tone = toneFor(category.score);
+        return (
           <div
-            className="mt-3 h-1.5 overflow-hidden rounded-full bg-border-subtle"
-            role="meter"
-            aria-valuenow={category.score}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`${CATEGORY_LABELS[category.category]} score`}
+            key={category.category}
+            className="border-b border-r border-border-subtle p-4"
           >
+            <dt className="eyebrow">{CATEGORY_LABELS[category.category]}</dt>
+            <dd className="mt-2">
+              <span
+                className="font-display text-2xl font-bold leading-none tabular-nums"
+                style={{ color: tone }}
+              >
+                {category.score}
+              </span>
+              <span className="ml-1 text-xs text-muted">/100</span>
+            </dd>
             <div
-              className="h-full rounded-full"
-              style={{ width: `${category.score}%`, background: toneFor(category.score) }}
-            />
+              className="mt-3 h-1 overflow-hidden rounded-full bg-border-subtle"
+              role="meter"
+              aria-valuenow={category.score}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`${CATEGORY_LABELS[category.category]} score`}
+            >
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${category.score}%`, background: tone }}
+              />
+            </div>
+            <p className="mt-2.5 text-xs leading-snug text-muted">
+              {CATEGORY_BLURBS[category.category]}
+            </p>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </dl>
   );
 }

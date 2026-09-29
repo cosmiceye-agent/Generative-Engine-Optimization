@@ -7,50 +7,72 @@
  */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Envoyix palette.
+ *
+ * Light mode is warm paper rather than the usual cool grey — it separates the
+ * chrome from the blue accent without needing extra borders, and it keeps long
+ * guide copy comfortable. Dark mode is a neutral near-black (no blue cast) so
+ * the status colours stay the only saturated thing on screen.
+ *
+ * Status hues are deliberately far apart in both lightness and hue so pass /
+ * warn / fail survive the common forms of colour blindness; every badge that
+ * uses them also carries a text label, never colour alone.
+ */
 :root {
-  --background: #ffffff;
-  --surface: #f8fafc;
+  --background: #fcfbf7;
+  --surface: #f4f2ea;
   --surface-raised: #ffffff;
-  --border: #e2e8f0;
-  --foreground: #0f172a;
-  --muted: #64748b;
-  --accent: #4f46e5;
+  --border: #e6e2d5;
+  --border-strong: #d2ccb9;
+  --foreground: #16150f;
+  --muted: #6a675c;
+  --accent: #1b46d8;
+  --accent-hover: #1539ad;
   --accent-contrast: #ffffff;
-  --pass: #15803d;
-  --warn: #b45309;
-  --fail: #be123c;
+  /* Tinted accent wash for selected/active surfaces. */
+  --accent-wash: color-mix(in srgb, var(--accent) 8%, transparent);
+  --pass: #0f7038;
+  --warn: #8f5405;
+  --fail: #b81237;
   color-scheme: light;
 }
 
 .dark {
-  --background: #080b14;
-  --surface: #0f1523;
-  --surface-raised: #151c2c;
-  --border: #253046;
-  --foreground: #e7ecf5;
-  --muted: #94a3b8;
-  --accent: #818cf8;
-  --accent-contrast: #0b1020;
-  --pass: #4ade80;
-  --warn: #fbbf24;
-  --fail: #fb7185;
+  --background: #0b0b0d;
+  --surface: #141417;
+  --surface-raised: #1a1a1f;
+  --border: #2a2a31;
+  --border-strong: #3d3d47;
+  --foreground: #f1f0ec;
+  --muted: #9b9a92;
+  --accent: #8aa8ff;
+  --accent-hover: #a8bdff;
+  --accent-contrast: #0b0b0d;
+  --accent-wash: color-mix(in srgb, var(--accent) 14%, transparent);
+  --pass: #4ec97f;
+  --warn: #e9b23c;
+  --fail: #ff7a92;
   color-scheme: dark;
 }
 
 /* Respect the OS preference when the user has not chosen explicitly. */
 @media (prefers-color-scheme: dark) {
   :root:not(.light):not(.dark) {
-    --background: #080b14;
-    --surface: #0f1523;
-    --surface-raised: #151c2c;
-    --border: #253046;
-    --foreground: #e7ecf5;
-    --muted: #94a3b8;
-    --accent: #818cf8;
-    --accent-contrast: #0b1020;
-    --pass: #4ade80;
-    --warn: #fbbf24;
-    --fail: #fb7185;
+    --background: #0b0b0d;
+    --surface: #141417;
+    --surface-raised: #1a1a1f;
+    --border: #2a2a31;
+    --border-strong: #3d3d47;
+    --foreground: #f1f0ec;
+    --muted: #9b9a92;
+    --accent: #8aa8ff;
+    --accent-hover: #a8bdff;
+    --accent-contrast: #0b0b0d;
+    --accent-wash: color-mix(in srgb, var(--accent) 14%, transparent);
+    --pass: #4ec97f;
+    --warn: #e9b23c;
+    --fail: #ff7a92;
     color-scheme: dark;
   }
 }
@@ -60,14 +82,18 @@
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
   --color-border-subtle: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --color-accent-contrast: var(--accent-contrast);
+  --color-accent-wash: var(--accent-wash);
   --color-pass: var(--pass);
   --color-warn: var(--warn);
   --color-fail: var(--fail);
   --font-sans: var(--font-sans-stack);
+  --font-display: var(--font-display-stack);
   --font-mono: var(--font-mono-stack);
 }
 
@@ -76,11 +102,20 @@ body {
   color: var(--foreground);
 }
 
+/* Headings carry the display face; body copy stays on the text face. */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display-stack);
+  letter-spacing: -0.02em;
+}
+
 /* Keyboard focus must stay visible everywhere — part of the a11y budget. */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -92,19 +127,46 @@ body {
   }
 }
 
+/*
+ * Faint engineering grid behind the hero. Purely decorative, drawn with a
+ * gradient rather than an image so it costs no request and scales cleanly.
+ */
+.grid-backdrop {
+  background-image:
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 72px 72px;
+  /* Fade it out towards the edges so it reads as texture, not as a table. */
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 20%, transparent 75%);
+}
+
+/* Small caps label used for section eyebrows and table headers. */
+.eyebrow {
+  font-family: var(--font-mono-stack);
+  font-size: 0.6875rem;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
 /* Long-form guide copy. Scoped so it cannot leak into the app chrome. */
 .prose-geo :where(h2) {
+  font-family: var(--font-display-stack);
   font-size: 1.5rem;
   line-height: 2rem;
-  font-weight: 650;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   margin-top: 2.5rem;
   margin-bottom: 0.75rem;
   scroll-margin-top: 5rem;
 }
 .prose-geo :where(h3) {
+  font-family: var(--font-display-stack);
   font-size: 1.175rem;
   line-height: 1.75rem;
-  font-weight: 620;
+  font-weight: 600;
+  letter-spacing: -0.015em;
   margin-top: 1.75rem;
   margin-bottom: 0.5rem;
   scroll-margin-top: 5rem;
@@ -143,7 +205,7 @@ body {
 .prose-geo :where(pre) {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 1rem;
   overflow-x: auto;
   margin-bottom: 1.25rem;

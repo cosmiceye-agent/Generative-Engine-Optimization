@@ -2,17 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { headers } from "next/headers";
-import { analyzeUrl } from "@/lib/geo/analyze";
+import { analyzePage } from "@/lib/geo/analyze";
 import { reportToMarkdown } from "@/lib/geo/report";
 import { FetchFailure } from "@/lib/geo/fetcher";
 import { SsrfError } from "@/lib/geo/ssrf";
+import { isLlmReviewEnabled } from "@/lib/geo/llm-review";
 import { checkRateLimit, clientKeyFromHeaders } from "@/lib/geo/rate-limit";
 import { normaliseUrlInput } from "@/lib/geo/normalise-url";
-import { sortByImpact } from "@/lib/geo/scoring";
-import type { AnalysisReport } from "@/lib/geo/types";
+import { sortByImpact, impactOf } from "@/lib/geo/scoring";
+import type { AnalysisReport, LlmReview } from "@/lib/geo/types";
 import { ScoreGauge } from "@/components/ScoreGauge";
 import { CategoryScores } from "@/components/CategoryScores";
 import { CheckCard } from "@/components/CheckCard";
+import { CheckMatrix } from "@/components/CheckMatrix";
 import { CopyMarkdownButton } from "@/components/CopyMarkdownButton";
 import { UrlForm } from "@/components/UrlForm";
 
@@ -33,7 +35,7 @@ export const metadata: Metadata = {
 
 function Shell({ url, children }: { url: string; children: React.ReactNode }) {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
+    <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
       <div className="mb-8">
         <UrlForm initialUrl={url} size="compact" />
       </div>
@@ -44,13 +46,13 @@ function Shell({ url, children }: { url: string; children: React.ReactNode }) {
 
 function ErrorState({ title, detail, hint }: { title: string; detail: string; hint?: string }) {
   return (
-    <div className="rounded-lg border border-border-subtle bg-surface-raised p-8 text-center">
-      <h1 className="text-xl font-semibold">{title}</h1>
+    <div className="rounded-2xl border border-border-subtle bg-surface-raised p-8 text-center sm:p-12">
+      <h1 className="font-display text-xl font-semibold">{title}</h1>
       <p className="mx-auto mt-3 max-w-lg leading-relaxed text-muted">{detail}</p>
       {hint && <p className="mx-auto mt-2 max-w-lg text-sm text-muted">{hint}</p>}
       <Link
         href="/"
-        className="mt-6 inline-block rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-accent-contrast"
+        className="mt-7 inline-block rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-hover"
       >
         Back to the start
       </Link>
@@ -58,81 +60,163 @@ function ErrorState({ title, detail, hint }: { title: string; detail: string; hi
   );
 }
 
+/** What the analyzer is doing while the skeleton is on screen. Naming the steps
+ *  makes a multi-second wait feel accounted for rather than stalled. */
+const STEPS = [
+  "Fetching the page as an AI crawler would — no JavaScript",
+  "Reading robots.txt, llms.txt and the sitemap",
+  "Scoring 22 checks across four categories",
+];
+
 function LoadingState() {
   return (
-    <div className="animate-pulse space-y-6" aria-busy="true" aria-live="polite">
+    <div aria-busy="true" aria-live="polite">
       <p className="sr-only">Fetching and analysing the page…</p>
-      <div className="h-36 rounded-lg border border-border-subtle bg-surface" />
-      <div className="grid gap-4 sm:grid-cols-2">
-        {[0, 1, 2, 3].map((index) => (
-          <div key={index} className="h-28 rounded-lg border border-border-subtle bg-surface" />
-        ))}
+
+      <div className="rounded-2xl border border-border-subtle bg-surface-raised p-6">
+        <ol className="space-y-2.5">
+          {STEPS.map((step) => (
+            <li key={step} className="flex items-center gap-3 text-sm text-muted">
+              <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-accent" />
+              {step}
+            </li>
+          ))}
+        </ol>
       </div>
-      <div className="space-y-3">
-        {[0, 1, 2, 3, 4, 5].map((index) => (
-          <div key={index} className="h-16 rounded-lg border border-border-subtle bg-surface" />
-        ))}
+
+      <div className="mt-6 animate-pulse space-y-6">
+        <div className="h-24 rounded-xl border border-border-subtle bg-surface" />
+        <div className="space-y-2">
+          {[0, 1, 2, 3, 4, 5].map((index) => (
+            <div key={index} className="h-16 rounded-xl border border-border-subtle bg-surface" />
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-function Results({ report }: { report: AnalysisReport }) {
+function SectionHeading({ title, children }: { title: string; children?: React.ReactNode }) {
+  return (
+    <div className="mb-4">
+      <h2 className="font-display text-lg font-semibold tracking-tight">{title}</h2>
+      {children && <p className="mt-1 text-sm leading-relaxed text-muted">{children}</p>}
+    </div>
+  );
+}
+
+/** The optional AI step, awaited in its own boundary so the 22 deterministic
+ *  checks are already on screen while the model is still working. */
+async function LlmReviewSection({ review }: { review: Promise<LlmReview | null> }) {
+  const result = await review;
+  if (!result || result.suggestions.length === 0) return null;
+
+  return (
+    <section>
+      <SectionHeading title="AI rewrite suggestions">
+        Generated by {result.model}. These are drafts — read them before publishing.
+      </SectionHeading>
+      <div className="space-y-3">
+        {result.suggestions.map((suggestion) => (
+          <article
+            key={suggestion.title}
+            className="rounded-xl border border-border-subtle bg-surface-raised p-5"
+          >
+            <h3 className="font-display font-semibold">{suggestion.title}</h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-muted">{suggestion.rationale}</p>
+            <blockquote className="mt-3.5 border-l-2 border-accent bg-surface px-4 py-3 text-sm leading-relaxed">
+              {suggestion.rewrite}
+            </blockquote>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function LlmReviewPending() {
+  return (
+    <section>
+      <SectionHeading title="AI rewrite suggestions">
+        Asking the model for concrete rewrites…
+      </SectionHeading>
+      <div className="h-28 animate-pulse rounded-xl border border-border-subtle bg-surface" />
+    </section>
+  );
+}
+
+function Results({ report, review }: { report: AnalysisReport; review: Promise<LlmReview | null> }) {
   const markdown = reportToMarkdown(report);
   const ranked = sortByImpact(report.checks);
   const priority = ranked.filter((check) => check.status !== "pass" && check.weight > 0);
+  const passing = report.checks.filter((check) => check.status === "pass").length;
 
   return (
     <div className="space-y-10">
-      <section className="rounded-lg border border-border-subtle bg-surface-raised p-6">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-sm font-medium text-muted">GEO audit</h1>
-            <p className="mt-1 break-all font-mono text-sm">{report.finalUrl}</p>
-            <p className="mt-2 text-xs text-muted">
-              HTTP {report.httpStatus} · fetched{" "}
-              <time dateTime={report.fetchedAt}>
-                {new Date(report.fetchedAt).toUTCString()}
-              </time>
+      <section className="overflow-hidden rounded-2xl border border-border-subtle bg-surface-raised">
+        <div className="flex flex-col-reverse items-start gap-6 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="eyebrow">GEO audit</p>
+            <p className="mt-2 break-all font-mono text-sm">{report.finalUrl}</p>
+            <p className="mt-2.5 text-xs text-muted">
+              HTTP {report.httpStatus} · {passing} of {report.checks.length} checks passing · fetched{" "}
+              <time dateTime={report.fetchedAt}>{new Date(report.fetchedAt).toUTCString()}</time>
             </p>
             {report.requestedUrl !== report.finalUrl && (
-              <p className="mt-1 text-xs text-muted">
-                Redirected from {report.requestedUrl}
-              </p>
+              <p className="mt-1 text-xs text-muted">Redirected from {report.requestedUrl}</p>
             )}
           </div>
           <ScoreGauge score={report.overallScore} grade={report.grade} />
         </div>
 
-        <div className="mt-6 border-t border-border-subtle pt-5">
+        <div className="border-t border-border-subtle bg-surface px-6 py-4">
           <CopyMarkdownButton markdown={markdown} />
         </div>
       </section>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold tracking-tight">Category scores</h2>
+        <SectionHeading title="Category scores" />
         <CategoryScores categories={report.categories} />
+      </section>
+
+      <section>
+        <SectionHeading title="Every check at a glance">
+          One square per check, coloured by result. Select any square to jump to it.
+        </SectionHeading>
+        <div className="rounded-xl border border-border-subtle bg-surface-raised p-5">
+          <CheckMatrix checks={ranked} />
+        </div>
       </section>
 
       {priority.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold tracking-tight">Fix these first</h2>
-          <p className="mb-4 mt-1 text-sm text-muted">
+          <SectionHeading title="Fix these first">
             Ordered by recoverable score — each check&rsquo;s weight multiplied by how far it fell
-            short.
-          </p>
-          <ol className="space-y-2">
+            short. Working top-down is the fastest route to a higher score.
+          </SectionHeading>
+          <ol className="space-y-2.5">
             {priority.slice(0, 3).map((check, index) => (
               <li
                 key={check.id}
-                className="flex gap-3 rounded-lg border border-border-subtle bg-surface-raised p-4"
+                className="flex gap-4 rounded-xl border border-border-subtle bg-surface-raised p-5"
               >
-                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-accent text-xs font-bold text-accent-contrast">
+                <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-accent font-mono text-xs font-bold text-accent-contrast">
                   {index + 1}
                 </span>
-                <div className="min-w-0">
-                  <p className="font-medium">{check.label}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-muted">{check.fix}</p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <p className="font-display font-semibold">{check.label}</p>
+                    <p className="font-mono text-xs text-accent">
+                      +{Math.round(impactOf(check) / 10)} pts available
+                    </p>
+                  </div>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted">{check.fix}</p>
+                  <a
+                    href={`#check-${check.id}`}
+                    className="mt-2.5 inline-block text-xs font-medium text-accent hover:underline"
+                  >
+                    See the findings ↓
+                  </a>
                 </div>
               </li>
             ))}
@@ -141,8 +225,9 @@ function Results({ report }: { report: AnalysisReport }) {
       )}
 
       <section>
-        <h2 className="text-lg font-semibold tracking-tight">All {ranked.length} checks</h2>
-        <p className="mb-4 mt-1 text-sm text-muted">Highest impact first. Select one to expand it.</p>
+        <SectionHeading title={`All ${ranked.length} checks`}>
+          Highest impact first. Select any row to expand its findings.
+        </SectionHeading>
         <div className="space-y-2">
           {ranked.map((check, index) => (
             <CheckCard key={check.id} check={check} defaultOpen={index < 2} />
@@ -150,39 +235,17 @@ function Results({ report }: { report: AnalysisReport }) {
         </div>
       </section>
 
-      {report.llmReview && report.llmReview.suggestions.length > 0 && (
-        <section>
-          <h2 className="text-lg font-semibold tracking-tight">AI rewrite suggestions</h2>
-          <p className="mb-4 mt-1 text-sm text-muted">
-            Generated by {report.llmReview.model}. Review before publishing.
-          </p>
-          <div className="space-y-3">
-            {report.llmReview.suggestions.map((suggestion) => (
-              <article
-                key={suggestion.title}
-                className="rounded-lg border border-border-subtle bg-surface-raised p-4"
-              >
-                <h3 className="font-medium">{suggestion.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted">{suggestion.rationale}</p>
-                <blockquote className="mt-3 border-l-2 border-accent pl-3 text-sm leading-relaxed">
-                  {suggestion.rewrite}
-                </blockquote>
-              </article>
-            ))}
-          </div>
-        </section>
+      {/* Only mount the boundary when the step is actually configured, so a
+          disabled review never shows a skeleton that resolves to nothing. */}
+      {isLlmReviewEnabled() && (
+        <Suspense fallback={<LlmReviewPending />}>
+          <LlmReviewSection review={review} />
+        </Suspense>
       )}
     </div>
   );
 }
 
-/**
- * Runs the audit on the server and streams the result in.
- *
- * Doing the work here rather than in a client-side fetch means the findings are
- * in the server HTML — which is the very thing this tool grades other pages on.
- * Suspense gives the loading state for free while the fetch is in flight.
- */
 type Failure = { title: string; detail: string; hint?: string };
 
 /** Map a thrown analyzer error onto the copy shown to the user. */
@@ -191,7 +254,7 @@ function describeFailure(error: unknown): Failure {
     return {
       title: "That URL cannot be analysed",
       detail: error.message,
-      hint: "GEO Lens only fetches public http and https addresses.",
+      hint: "Envoyix only fetches public http and https addresses.",
     };
   }
   if (error instanceof FetchFailure) {
@@ -209,6 +272,13 @@ function describeFailure(error: unknown): Failure {
   };
 }
 
+/**
+ * Runs the audit on the server and streams the result in.
+ *
+ * Doing the work here rather than in a client-side fetch means the findings are
+ * in the server HTML — which is the very thing this tool grades other pages on.
+ * Suspense gives the loading state for free while the fetch is in flight.
+ */
 async function Analysis({ url }: { url: string }) {
   const requestHeaders = await headers();
   const rate = checkRateLimit(clientKeyFromHeaders(requestHeaders));
@@ -226,14 +296,15 @@ async function Analysis({ url }: { url: string }) {
   // React renders a child would not be caught here anyway, so constructing the
   // element outside the block keeps the error handling honest.
   let report: AnalysisReport;
+  let review: Promise<LlmReview | null>;
   try {
-    report = await analyzeUrl(url);
+    ({ report, review } = await analyzePage(url));
   } catch (error) {
     const failure = describeFailure(error);
     return <ErrorState title={failure.title} detail={failure.detail} hint={failure.hint} />;
   }
 
-  return <Results report={report} />;
+  return <Results report={report} review={review} />;
 }
 
 export default async function AnalyzePage({ searchParams }: PageProps<"/analyze">) {
@@ -245,10 +316,10 @@ export default async function AnalyzePage({ searchParams }: PageProps<"/analyze"
   if (url === "") {
     return (
       <Shell url="">
-        <div className="rounded-lg border border-border-subtle bg-surface-raised p-8 text-center">
-          <h1 className="text-xl font-semibold">Enter a URL to audit</h1>
+        <div className="rounded-2xl border border-border-subtle bg-surface-raised p-8 text-center sm:p-12">
+          <h1 className="font-display text-xl font-semibold">Enter a URL to audit</h1>
           <p className="mx-auto mt-3 max-w-lg leading-relaxed text-muted">
-            Paste any public page above. GEO Lens fetches it along with its robots.txt, llms.txt and
+            Paste any public page above. Envoyix fetches it along with its robots.txt, llms.txt and
             sitemap, then scores how readily an AI answer engine could cite it.
           </p>
         </div>

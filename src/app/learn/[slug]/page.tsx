@@ -6,6 +6,7 @@ import type { Article, BreadcrumbList, FAQPage, WithContext } from "schema-dts";
 import { getAllGuides, getGuide, getGuideSlugs } from "@/lib/guides";
 import { JsonLd } from "@/components/JsonLd";
 import { site } from "@/lib/site";
+import { formatDate } from "@/lib/format-date";
 
 /** Guides are files on disk, so every slug can be built ahead of time. */
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
@@ -92,7 +93,7 @@ export default async function GuidePage({ params }: PageProps<"/learn/[slug]">) 
       : null;
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-12">
+    <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
       <JsonLd data={article} />
       <JsonLd data={breadcrumbs} />
       {faqPage && <JsonLd data={faqPage} />}
@@ -106,7 +107,8 @@ export default async function GuidePage({ params }: PageProps<"/learn/[slug]">) 
       </nav>
 
       <header className="mb-10 border-b border-border-subtle pb-8">
-        <h1 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">
+        <p className="eyebrow">Guide</p>
+        <h1 className="mt-3.5 text-balance font-display text-3xl font-bold sm:text-4xl">
           {guide.title}
         </h1>
 
@@ -115,16 +117,14 @@ export default async function GuidePage({ params }: PageProps<"/learn/[slug]">) 
         <p className="mt-5 text-lg leading-relaxed text-muted">{guide.summary}</p>
 
         {/* `byline` is the class the authority check (and most parsers) look for. */}
-        <p className="byline mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+        <p className="byline mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[0.6875rem] uppercase tracking-wider text-muted">
           <span rel="author">
             By <span className="font-medium text-foreground">{guide.author}</span>
           </span>
           <span aria-hidden="true">·</span>
           <span>
             Updated <time dateTime={guide.dateModified}>
-              {new Date(guide.dateModified).toLocaleDateString("en-GB", {
-                day: "numeric", month: "long", year: "numeric",
-              })}
+              {formatDate(guide.dateModified)}
             </time>
           </span>
           <span aria-hidden="true">·</span>
@@ -138,12 +138,12 @@ export default async function GuidePage({ params }: PageProps<"/learn/[slug]">) 
 
       {guide.faq.length > 0 && (
         <section className="mt-14 border-t border-border-subtle pt-10">
-          <h2 className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
+          <h2 className="font-display text-2xl font-semibold">Frequently asked questions</h2>
           <div className="mt-6 space-y-3">
             {guide.faq.map((entry) => (
               <details
                 key={entry.question}
-                className="rounded-lg border border-border-subtle bg-surface-raised p-4"
+                className="rounded-xl border border-border-subtle bg-surface-raised p-4 transition-colors hover:border-border-strong open:bg-surface"
               >
                 <summary className="cursor-pointer font-medium">{entry.question}</summary>
                 <p className="mt-3 leading-relaxed text-muted">{entry.answer}</p>
@@ -155,7 +155,7 @@ export default async function GuidePage({ params }: PageProps<"/learn/[slug]">) 
 
       {guide.sources.length > 0 && (
         <section className="mt-12 border-t border-border-subtle pt-10">
-          <h2 className="text-xl font-semibold tracking-tight">Sources and further reading</h2>
+          <h2 className="font-display text-xl font-semibold">Sources and further reading</h2>
           <ul className="mt-4 space-y-2 text-sm">
             {guide.sources.map((source) => (
               <li key={source.url}>
@@ -174,7 +174,7 @@ export default async function GuidePage({ params }: PageProps<"/learn/[slug]">) 
 
       {others.length > 0 && (
         <nav aria-label="More guides" className="mt-12 border-t border-border-subtle pt-10">
-          <h2 className="text-xl font-semibold tracking-tight">More guides</h2>
+          <h2 className="font-display text-xl font-semibold">More guides</h2>
           <ul className="mt-4 space-y-2">
             {others.map((entry) => (
               <li key={entry.slug}>

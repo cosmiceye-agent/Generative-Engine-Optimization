@@ -2,7 +2,7 @@ import type { FetchedResource } from "./types";
 import { assertSafeUrl, SsrfError } from "./ssrf";
 
 export const USER_AGENT =
-  "GEOLensBot/1.0 (+https://geo-lens.vercel.app/about; GEO audit tool; respects robots.txt)";
+  "EnvoyixBot/1.0 (+https://envoyix.vercel.app/about; GEO audit tool; respects robots.txt)";
 
 export const FETCH_TIMEOUT_MS = 10_000;
 export const MAX_BODY_BYTES = 5 * 1024 * 1024; // 5 MB

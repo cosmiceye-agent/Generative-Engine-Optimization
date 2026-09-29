@@ -1,8 +1,8 @@
-# GEO Lens
+# Envoyix
 
 Audit any public URL for **Generative Engine Optimization (GEO)** — how readily AI answer engines (ChatGPT, Perplexity, Claude, Gemini, Google AI Overviews) can crawl a page, understand it, and cite it as a source.
 
-The site is also built to be a worked example of its own advice: it server-renders everything, ships JSON-LD on every route, publishes `llms.txt` and `llms-full.txt`, and names the AI crawlers explicitly in `robots.txt`. It scores **92/100** on its own analyzer.
+The site is also built to be a worked example of its own advice: it server-renders everything, ships JSON-LD on every route, publishes `llms.txt` and `llms-full.txt`, and names the AI crawlers explicitly in `robots.txt`. It scores **97/100** on its own analyzer, with all 22 checks passing.
 
 ---
 
@@ -35,11 +35,12 @@ flowchart TD
         Page["/analyze page.tsx<br/>Server Component"]
         API["/api/analyze<br/>route.ts"]
         RL["rate-limit.ts<br/>in-memory fixed window"]
+        Cache["cache.ts<br/>60s TTL + coalescing"]
         Analyze["analyze.ts<br/>orchestration"]
         SSRF["ssrf.ts<br/>scheme · port · DNS · CIDR"]
         Fetch["fetcher.ts<br/>10s timeout · 5MB cap · 3 redirects"]
         Ctx["context.ts<br/>cheerio parse + text extraction"]
-        Reg["registry.ts<br/>21 pure check functions"]
+        Reg["registry.ts<br/>22 pure check functions"]
         Score["scoring.ts<br/>weighted average + impact sort"]
         LLM["llm-review.ts<br/>optional, env-gated"]
     end
@@ -50,9 +51,10 @@ flowchart TD
     Form -->|"navigate ?url="| Page
     Page --> RL
     API --> RL
-    RL --> Analyze
-    Page --> Analyze
-    API --> Analyze
+    RL --> Cache
+    Page --> Cache
+    API --> Cache
+    Cache -->|"miss"| Analyze
     Analyze --> SSRF
     SSRF -->|"vetted URL"| Fetch
     Fetch <-->|"re-vets every redirect hop"| SSRF
@@ -71,6 +73,14 @@ flowchart TD
 
 Every check is a **pure function** `(ctx: PageContext) => CheckResult`. No check performs I/O. All fetching happens once, up front, in `analyze.ts`, and the results are frozen into a `PageContext` that the checks read. That is what makes all 22 checks unit-testable against static HTML fixtures with no network and no mocks.
 
+Three things in `analyze.ts` exist purely to keep an audit fast:
+
+- **The sibling files are fetched concurrently with the page.** `robots.txt`, `llms.txt` and the sitemap sit at fixed paths, so they are requested against the submitted origin at the same time as the page itself rather than after it. If the page then redirects to a *different* origin, the speculative results are discarded and re-fetched from wherever it landed — the common case saves a full round trip, the rare case costs three GETs of public text files.
+- **The sitemap tries `/sitemap.xml` alone first.** Only if that misses do `/sitemap_index.xml` and `/sitemap-index.xml` go out, together. Firing all three every time would triple the requests made to a stranger's server to speed up the minority case.
+- **The optional AI review is not awaited by the page.** `analyzePage()` returns the deterministic report plus the review as a *pending promise*, so `/analyze` streams 22 checks into the response while the model is still working. `analyzeUrl()` awaits it, for the JSON API where there is nothing to stream into.
+
+`cache.ts` memoises a finished audit for 60 seconds. It stores the in-flight **promise**, not the resolved value, so two people auditing the same URL at the same moment share one fetch instead of racing two. Rejections are evicted immediately — a site that was briefly unreachable is retried, not remembered as broken.
+
 ```
 src/
   app/
@@ -84,7 +94,8 @@ src/
     robots.ts  sitemap.ts         # generated from the same data the app uses
     llms-full.txt/route.ts        # every guide's Markdown, in one file
     opengraph-image.tsx  icon.svg
-  components/                     # JsonLd, ScoreGauge, CheckCard, UrlForm, ThemeToggle…
+  components/                     # Logo, PageHeader, ScoreGauge, CheckCard, CheckMatrix,
+                                  #   CategoryScores, UrlForm, JsonLd, ThemeToggle…
   content/guides/*.mdx            # guide sources — also served at /llms-full.txt
   lib/
     site.ts  faq.ts  guides.ts    # site config, FAQ data, MDX loader (Zod-validated)
@@ -97,6 +108,7 @@ src/
       schema.ts                   # JSON-LD extraction and validation
       readability.ts              # Flesch + sentence/syllable counting
       scoring.ts                  # weighted average, categories, impact
+      cache.ts                    # 60s TTL promise cache + request coalescing
       registry.ts                 # the check list + report builder
       report.ts                   # Markdown export
       rate-limit.ts  llm-review.ts  normalise-url.ts
@@ -105,7 +117,7 @@ src/
 tests/
   fixtures/{good,bad,js-only}-page.html
   ssrf.test.ts crawlability.test.ts structure.test.ts authority.test.ts
-  content.test.ts scoring.test.ts
+  content.test.ts scoring.test.ts cache.test.ts
 ```
 
 ---
@@ -161,6 +173,31 @@ AI crawlers are weighted individually by `citationImpact` (see `robots-txt.ts`):
 
 ---
 
+## Design
+
+The visual language is defined entirely as CSS custom properties in `src/app/globals.css` and exposed to Tailwind through `@theme inline`, so nothing in a component hard-codes a colour.
+
+| Token | Light | Dark | Used for |
+|---|---|---|---|
+| `--background` | `#fcfbf7` warm paper | `#0b0b0d` neutral near-black | Page ground |
+| `--surface` / `--surface-raised` | `#f4f2ea` / `#ffffff` | `#141417` / `#1a1a1f` | Section bands, cards |
+| `--border` / `--border-strong` | `#e6e2d5` / `#d2ccb9` | `#2a2a31` / `#3d3d47` | Rules, card edges, hover |
+| `--accent` | `#1b46d8` | `#8aa8ff` | Links, primary buttons, the mark |
+| `--pass` / `--warn` / `--fail` | `#0f7038` / `#8f5405` / `#b81237` | `#4ec97f` / `#e9b23c` / `#ff7a92` | Check status |
+
+Light mode is warm paper rather than cool grey: it separates the chrome from the blue accent without extra borders, and keeps long guide copy comfortable. Dark mode is a neutral near-black with no blue cast, so the status colours are the only saturated thing on screen.
+
+Type is three faces, all self-hosted by `next/font` (no render-blocking request to Google, no layout shift): **Space Grotesk** for headings via `--font-display`, **Inter** for body copy, **JetBrains Mono** for URLs, scores and the `.eyebrow` label style.
+
+Two rules the components hold to, because they are the same rules this tool grades other sites on:
+
+- **Status is never colour alone.** Every coloured marker is paired with a text label or an `sr-only` description — see `CheckCard` and `CheckMatrix`.
+- **Disclosure without JavaScript.** Expandable content uses `<details>`/`<summary>`, so findings and FAQ answers are present in the server HTML whether or not they are open. A JS accordion would hide all of it from the crawlers that matter.
+
+Dark mode is class-based (`.dark` on `<html>`, stamped before paint by `ThemeScript`) so the header toggle can override the OS setting; the `prefers-color-scheme` media query is the fallback when no class is set.
+
+---
+
 ## Local setup
 
 Requires **Node 20.9+** (Next.js 16 minimum) and **pnpm**.
@@ -180,7 +217,7 @@ pnpm dev                       # http://localhost:3000
 | `pnpm start` | Serve the production build |
 | `pnpm lint` | ESLint flat config (`next lint` was removed in Next 16) |
 | `pnpm typecheck` | `next typegen && tsc --noEmit` |
-| `pnpm test` | Vitest, 169 tests |
+| `pnpm test` | Vitest, 183 tests |
 | `pnpm test:watch` | Vitest in watch mode |
 
 ### Using the API directly
@@ -243,6 +280,7 @@ Other limits: 10s timeout, 5 MB streamed body cap (enforced while reading, not f
 ## Known limitations
 
 - **In-memory rate limiting.** `rate-limit.ts` keeps a `Map` per process. On Vercel each serverless instance has its own, so the effective limit is *(10/min × instances)*, and state is lost on cold start. **Replace with Upstash Redis or Vercel KV before running this publicly** — the module is a drop-in seam.
+- **In-memory report cache.** `cache.ts` is per-process for the same reason, so the hit rate in production is lower than it is locally and the cache is empty after every cold start. That is harmless — it is an optimisation, never a correctness requirement — but it does mean the 60-second window is per instance, not global.
 - **DNS rebinding (TOCTOU).** The guard resolves and vets the addresses, but the kernel resolves again when connecting. Closing this fully needs a custom `lookup`/agent pinning the connection to the vetted IP.
 - **No JavaScript execution.** Deliberate — it matches what most AI crawlers do — but it means a client-rendered page is scored as those crawlers see it, not as a browser does.
 - **Heuristics, not a published formula.** No answer engine documents how it selects sources. The weights encode what is publicly known plus reasonable inference. They are visible and commented in each check module; treat the score as a structural readiness signal, not a ranking prediction.

@@ -1,23 +1,23 @@
-# GEO Lens
+# Envoyix
 
-> GEO Lens audits any public URL for Generative Engine Optimization: whether ChatGPT, Perplexity, Claude, Gemini and Google AI Overviews can crawl it, understand it, and cite it as a source.
+> Envoyix audits any public URL for Generative Engine Optimization: whether ChatGPT, Perplexity, Claude, Gemini and Google AI Overviews can crawl it, understand it, and cite it as a source.
 
-GEO Lens is a free, no-signup web tool. Paste a URL and it fetches the page along with its robots.txt, llms.txt and sitemap, then scores it across 22 checks in four categories — crawlability, structure, authority and content — and returns an ordered list of fixes. Nothing is stored; every audit is a live fetch.
+Envoyix is a free, no-signup web tool. Paste a URL and it fetches the page along with its robots.txt, llms.txt and sitemap, then scores it across 22 checks in four categories — crawlability, structure, authority and content — and returns an ordered list of fixes. Every audit is a live fetch; reports are held in memory for 60 seconds and never written to disk.
 
 The full Markdown text of every guide on this site is available at /llms-full.txt.
 
 ## Guides
 
-- [What is GEO (Generative Engine Optimization)?](https://geo-lens.vercel.app/learn/what-is-geo): Generative Engine Optimization is the practice of structuring web content so that AI answer engines can crawl it, understand it, and cite it as a source.
-- [GEO vs SEO: what carries over and what does not](https://geo-lens.vercel.app/learn/geo-vs-seo): GEO and SEO share crawlability and structure as a foundation, but SEO optimises for a position in a ranked list while GEO optimises to be the passage quoted inside a generated answer.
-- [How to structure content for AI citations](https://geo-lens.vercel.app/learn/structure-content-for-ai-citations): Structure each page so that any passage lifted out of it still makes sense on its own — lead with the answer, phrase headings as questions, and name subjects instead of using pronouns.
+- [What is GEO (Generative Engine Optimization)?](https://envoyix.vercel.app/learn/what-is-geo): Generative Engine Optimization is the practice of structuring web content so that AI answer engines can crawl it, understand it, and cite it as a source.
+- [GEO vs SEO: what carries over and what does not](https://envoyix.vercel.app/learn/geo-vs-seo): GEO and SEO share crawlability and structure as a foundation, but SEO optimises for a position in a ranked list while GEO optimises to be the passage quoted inside a generated answer.
+- [How to structure content for AI citations](https://envoyix.vercel.app/learn/structure-content-for-ai-citations): Structure each page so that any passage lifted out of it still makes sense on its own — lead with the answer, phrase headings as questions, and name subjects instead of using pronouns.
 
 ## Tool
 
-- [Run an audit](https://geo-lens.vercel.app/analyze): Submit a public URL and get a weighted GEO score with per-check findings and fixes.
-- [Frequently asked questions](https://geo-lens.vercel.app/faq): How the score is calculated, why checks are weighted differently, whether to block AI crawlers, and what llms.txt is for.
-- [About GEO Lens](https://geo-lens.vercel.app/about): How the analyzer works, which crawlers it checks, how it identifies itself, and what its limits are.
+- [Run an audit](https://envoyix.vercel.app/analyze): Submit a public URL and get a weighted GEO score with per-check findings and fixes.
+- [Frequently asked questions](https://envoyix.vercel.app/faq): How the score is calculated, why checks are weighted differently, whether to block AI crawlers, and what llms.txt is for.
+- [About Envoyix](https://envoyix.vercel.app/about): How the analyzer works, which crawlers it checks, how it identifies itself, and what its limits are.
 
 ## Optional
 
-- [llms-full.txt](https://geo-lens.vercel.app/llms-full.txt): The complete Markdown source of every guide, in one file.
+- [llms-full.txt](https://envoyix.vercel.app/llms-full.txt): The complete Markdown source of every guide, in one file.

@@ -4,9 +4,9 @@ import { useSyncExternalStore } from "react";
 
 type Theme = "light" | "dark";
 
-const STORAGE_KEY = "geo-lens-theme";
+const STORAGE_KEY = "envoyix-theme";
 /** Dispatched on toggle so every mounted toggle re-reads the DOM together. */
-const CHANGE_EVENT = "geo-lens-theme-change";
+const CHANGE_EVENT = "envoyix-theme-change";
 
 /**
  * The theme lives on <html> (stamped before paint by ThemeScript), not in React
@@ -31,6 +31,42 @@ function getSnapshot(): Theme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+/* Drawn as SVG rather than the ☀/☾ characters: those are emoji-presentation on
+   some platforms and render as full-colour glyphs at unpredictable sizes. */
+function SunIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="size-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="size-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+    </svg>
+  );
+}
+
 export function ThemeToggle() {
   const theme = useSyncExternalStore<Theme | null>(subscribe, getSnapshot, () => null);
 
@@ -52,11 +88,9 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-      className="inline-flex size-9 items-center justify-center rounded-md border border-border-subtle bg-surface text-muted transition-colors hover:text-foreground"
+      className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-surface-raised text-muted transition-colors hover:border-border-strong hover:text-foreground"
     >
-      <span aria-hidden="true" className="text-base leading-none">
-        {theme === null ? "" : theme === "dark" ? "☀" : "☾"}
-      </span>
+      {theme === null ? null : theme === "dark" ? <SunIcon /> : <MoonIcon />}
     </button>
   );
 }
